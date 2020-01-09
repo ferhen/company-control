@@ -20,7 +20,7 @@ enum InputType {
 }
 
 fn main() {
-//    let mut company: HashMap<&str, Vec<String>> = HashMap::new();
+    let mut company: HashMap<String, Vec<String>> = HashMap::new();
 
     loop {
         let mut input = String::new();
@@ -28,9 +28,9 @@ fn main() {
         match io::stdin().read_line(&mut input) {
             Ok(_) => {
                 match get_input_type(&input.trim()) {
-                    Ok(InputType::AddEmployee {employee, department}) => println!("employee: {} | department: {}", employee, department),
-                    Ok(InputType::GetEmployeesByDepartment(department)) => println!("department: {}", department),
-                    Ok(InputType::GetAllEmployees) => println!("all employees"),
+                    Ok(InputType::AddEmployee {employee, department}) => add_employee(&mut company, employee, department),
+                    Ok(InputType::GetEmployeesByDepartment(department)) => show_employees_from_department(&company, &department),
+                    Ok(InputType::GetAllEmployees) => show_all_employees(&company),
                     Err(e) => println!("Erro: {}", e)
                 }
             },
@@ -58,30 +58,25 @@ fn get_input_type(input_string: &str) -> Result<InputType, io::Error> {
     }
 }
 
-fn add_employee(company: &mut HashMap<&str, &mut Vec<String>>, new_employee: InputType) -> Result<(), io::Error> {
-    match new_employee {
-        InputType::AddEmployee { employee, department} => {
-            match company.get(&department[..]) {
-                Some(existing_department) => existing_department.push(employee),
-                None => {
-                    let mut new_company: Vec<String> = Vec::new();
-                    new_company.push(employee);
-                    company.insert(
-                        &department,
-                        &mut new_company
-                    );
-                }
-            }
-            return Ok(());
-        },
-        _ => Err(io::Error::new(io::ErrorKind::Other,"Erro ao adicionar novo funcionário!"))
+fn add_employee(company: &mut HashMap<String, Vec<String>>, employee: String, department: String) -> () {
+    println!("Funcionário {} adicionado ao departamento {}!", employee, department);
+    match company.get_mut(&department) {
+        Some(existing_department) => existing_department.push(employee),
+        None => {
+            let mut new_company: Vec<String> = Vec::new();
+            new_company.push(employee);
+            company.insert(department, new_company);
+        }
     }
 }
 
-//fn show_employees_from_department(department: &str) -> Result<&str, dyn Error> {
-//
-//}
-//
-//fn show_all_employees() -> Result<&str, dyn Error> {
-//
-//}
+fn show_employees_from_department(company: &HashMap<String, Vec<String>>, department: &String) -> () {
+    match company.get(department) {
+        Some(existing_department) => println!("{:#?}", existing_department),
+        None => println!("Nenhum funcionário registrado no departamento {}", &department)
+    }
+}
+
+fn show_all_employees(company: &HashMap<String, Vec<String>>) -> () {
+    println!("{:#?}", company);
+}
