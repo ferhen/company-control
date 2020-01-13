@@ -10,32 +10,42 @@ lazy_static! {
 }
 
 #[derive(Debug)]
-enum InputType {
+enum InputType<'a> {
     AddEmployee {
-        employee: String,
-        department: String
+        employee: &'a str,
+        department: &'a str
     },
-    GetEmployeesByDepartment(String),
+    GetEmployeesByDepartment(&'a str),
     GetAllEmployees
 }
 
 fn main() {
-    let mut company: HashMap<String, Vec<String>> = HashMap::new();
-
+    let mut company: HashMap<&str, Vec<&str>> = HashMap::new();
+    
     loop {
         let mut input = String::new();
 
-        match io::stdin().read_line(&mut input) {
-            Ok(_) => {
-                match get_input_type(&input.trim()) {
-                    Ok(InputType::AddEmployee {employee, department}) => add_employee(&mut company, employee, department),
-                    Ok(InputType::GetEmployeesByDepartment(department)) => show_employees_from_department(&company, &department),
-                    Ok(InputType::GetAllEmployees) => show_all_employees(&company),
-                    Err(e) => println!("Erro: {}", e)
-                }
-            },
-            Err(error) => println!("Erro: {}", error)
-        };
+                
+        io::stdin().read_line(&mut input).unwrap();
+        match get_input_type(input.trim()) {
+            Ok(InputType::AddEmployee {employee, department}) => add_employee(&mut company, employee, department),
+            Ok(InputType::GetEmployeesByDepartment(department)) => show_employees_from_department(&company, &department),
+            Ok(InputType::GetAllEmployees) => show_all_employees(&company),
+            Err(e) => println!("Erro: {}", e)
+        }
+
+        // match io::stdin().read_line(&mut input) {
+        //     Ok(_) => {
+        //         let input = input.trim();
+        //         match get_input_type(input) {
+        //             Ok(InputType::AddEmployee {employee, department}) => add_employee(&mut company, employee, department),
+        //             Ok(InputType::GetEmployeesByDepartment(department)) => show_employees_from_department(&company, &department),
+        //             Ok(InputType::GetAllEmployees) => show_all_employees(&company),
+        //             Err(e) => println!("Erro: {}", e)
+        //         }
+        //     },
+        //     Err(e) => println!("Erro: {}", e)
+        // };
     }
 }
 
@@ -43,12 +53,12 @@ fn get_input_type(input_string: &str) -> Result<InputType, io::Error> {
     let words: Vec<&str> = input_string.split_whitespace().collect();
     if ADD_EMPLOYEE_CMD.is_match(input_string) {
         return Ok(InputType::AddEmployee {
-            employee: String::from(*words.get(1).unwrap()),
-            department: String::from(*words.get(3).unwrap())
+            employee: words.get(1).unwrap(),
+            department: words.get(3).unwrap()
         });
     }
     else if GET_DEPARTMENT_EMPLOYEES_CMD.is_match(input_string) {
-        return Ok(InputType::GetEmployeesByDepartment(String::from(*words.get(3).unwrap())));
+        return Ok(InputType::GetEmployeesByDepartment(words.get(3).unwrap()));
     }
     else if GET_ALL_EMPLOYEES_CMD.is_match(input_string) {
         return Ok(InputType::GetAllEmployees);
@@ -58,25 +68,25 @@ fn get_input_type(input_string: &str) -> Result<InputType, io::Error> {
     }
 }
 
-fn add_employee(company: &mut HashMap<String, Vec<String>>, employee: String, department: String) -> () {
+fn add_employee<'a>(company: &mut HashMap<&'a str, Vec<&'a str>>, employee: &'a str, department: &'a str) -> () {
     println!("Funcionário {} adicionado ao departamento {}!", employee, department);
     match company.get_mut(&department) {
         Some(existing_department) => existing_department.push(employee),
         None => {
-            let mut new_company: Vec<String> = Vec::new();
+            let mut new_company: Vec<&str> = Vec::new();
             new_company.push(employee);
             company.insert(department, new_company);
         }
     }
 }
 
-fn show_employees_from_department(company: &HashMap<String, Vec<String>>, department: &String) -> () {
+fn show_employees_from_department(company: &HashMap<&str, Vec<&str>>, department: &str) -> () {
     match company.get(department) {
         Some(existing_department) => println!("{:#?}", existing_department),
         None => println!("Nenhum funcionário registrado no departamento {}", &department)
     }
 }
 
-fn show_all_employees(company: &HashMap<String, Vec<String>>) -> () {
+fn show_all_employees(company: &HashMap<&str, Vec<&str>>) -> () {
     println!("{:#?}", company);
 }
